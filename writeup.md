@@ -30,6 +30,10 @@ The goals / steps of this project are the following:
 [image9]: ./writeup_data/comb_bin_unwarp.png  "Stack"
 [image10]: ./writeup_data/comb_bin_warp.png  "Stack"
 [image11]: ./writeup_data/hist.png  "hist"
+[image12]: ./writeup_data/ptransform.png  "ptransform"
+[image13]: ./writeup_data/poly.png  "poly"
+[image14]: ./writeup_data/radius.png  "radius"
+[image15]: ./writeup_data/plot_lane.png  "plot_lane"
 [video1]: ./project_video.mp4 "Video"
 
 
@@ -158,58 +162,77 @@ combined_binary[(cbinary == 1) | (sxbinary == 1)] = 1
 ![alt text][image9]
 ![alt text][image10]
 
+At this point, I have a binary image of lane markings as viewed from the top. We plot a histogram of the image along the horizontal direction to locate the position of the lane markings. The position of the lane markings as obtained from the histogram are then used in the next step for the sliding windows.
 ```python
 # Histogram
 histogram = np.sum(combined_binary[:,:], axis=0)
 ```
 ![alt text][image11]
 
-
 ####3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+The source and destination points were hardcoded as follows:
 
+```python
+src = np.float32([[1030, 660], [740, 480], [550, 480], [275, 660]])
+dst = np.float32([[1050, 700], [1050, 0], [270, 0] , [270, 700]])
 ```
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
 
+```python
+M = cv2.getPerspectiveTransform(src, dst)
+Minv = cv2.getPerspectiveTransform(dst, src)
+warped = cv2.warpPerspective(img, M, img_size, flags=cv2.INTER_LINEAR)
+
+img_roi = cv2.warpPerspective(img_roi, M, (img.shape[1], img.shape[0] ), flags=cv2.INTER_LINEAR)
 ```
-This resulted in the following source and destination points:
-
-|  Source   | Destination |
-| :-------: | :---------: |
-| 585, 460  |   320, 0    |
-| 203, 720  |  320, 720   |
-| 1127, 720 |  960, 720   |
-| 695, 460  |   960, 0    |
-
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
+![alt text][image12]
+
+
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+A sliding window was used to scan for lane markings in the image. The search started at the bottom of the image where the histogram peaks were, and moved vertically while maintaining a margin of +/-100 pixels. The output of the sliding windows was x and y points. Using polyfit(), the coefficients of the left-right polynomial were obtained:
 
-![alt text][image5]
+```python
+left_coefficients.append(np.polyfit(lefty, leftx, 2))
+right_coefficients.append(np.polyfit(righty, rightx, 2))
+```
+
+And then a Quadratic Equation was plotted based on the coefficients:
+
+```python
+# Generate x and y values for plotting
+## Quadratic Equation: ay2+by+c
+ploty = np.linspace(0, combined_binary.shape[0]-1, combined_binary.shape[0] )
+left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+```
+
+![alt text][image13]
 
 ####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+![alt text][image14]
+
+```python
+# Radius is calculated at the maximum y-value, corresponding to the bottom of the image
+y_eval = np.max(ploty)
+left_curverad = ((1 + (2*left_fit[0]*y_eval + left_fit[1])**2)**1.5) / np.absolute(2*left_fit[0])
+right_curverad = ((1 + (2*right_fit[0]*y_eval + right_fit[1])**2)**1.5) / np.absolute(2*right_fit[0])
+    
+# Define conversions in x and y from pixels space to meters
+ym_per_pix = 30/720 # meters per pixel in y dimension
+xm_per_pix = 3.7/700 # meters per pixel in x dimension
+```
+
 
 ####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+An example of the result plotted back down onto the road with the lane markings:
 
-![alt text][image6]
+![alt text][image15]
 
 ---
 
@@ -225,5 +248,9 @@ Here's a [link to my video result](./project_video.mp4)
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+1. Choosing the correct color space.
+2. Choosing the correct thresholds for color and binary
+3. Deciding the number of previous frames to average across
+
+The pipeline is likely to fail if another vehicle is in front of our vehicle. This could possibly give an incorrect histogram output. One way is to detect the presence of a vehicle in front and change the strategy accordingly. 
 
