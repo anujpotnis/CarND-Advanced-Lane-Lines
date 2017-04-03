@@ -1,5 +1,5 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
+## Writeup Template
+### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
 
 ---
 
@@ -34,21 +34,22 @@ The goals / steps of this project are the following:
 [image13]: ./writeup_data/poly.png  "poly"
 [image14]: ./writeup_data/radius.png  "radius"
 [image15]: ./writeup_data/plot_lane.png  "plot_lane"
+[image16]: ./writeup_data/result_info.png  "result"
 [video1]: ./project_video.mp4 "Video"
 
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-###Writeup / README
+### Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Advanced-Lane-Lines/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
 
 Writeup has been provided as writeup.md
-###Camera Calibration
+### Camera Calibration
 
-####1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+#### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
 Reference to the camera calibration code : [Camera Calibration Code](https://github.com/udacity/CarND-Camera-Calibration)
 
@@ -106,13 +107,13 @@ img = undistort(img, mtx, dist)
 ![alt text][image1]
 
 
+### Pipeline (single images)
 
-###Pipeline (single images)
-
-####1. Provide an example of a distortion-corrected image.
+#### 1. Provide an example of a distortion-corrected image.
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
 ![alt text][image2]
-####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+
+#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 The first step was to explore the different color spaces. This is the most important step because if the lane information is not captured robustly in a color space, then the rest of the pipeline (e.g. threshold, gradients) will fail. It was observed that the Saturation (S) color channel of the HLS color space captured both the yellow and white lane marking.
 
 ![alt text][image3]
@@ -169,7 +170,9 @@ histogram = np.sum(combined_binary[:,:], axis=0)
 ```
 ![alt text][image11]
 
-####3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+
+
+#### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
 The source and destination points were hardcoded as follows:
 
@@ -191,7 +194,7 @@ I verified that my perspective transform was working as expected by drawing the 
 
 
 
-####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
 A sliding window was used to scan for lane markings in the image. The search started at the bottom of the image where the histogram peaks were, and moved vertically while maintaining a margin of +/-100 pixels. The output of the sliding windows was x and y points. Using polyfit(), the coefficients of the left-right polynomial were obtained:
 
@@ -212,7 +215,9 @@ right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
 
 ![alt text][image13]
 
-####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+
+
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 ![alt text][image14]
 
@@ -228,25 +233,32 @@ xm_per_pix = 3.7/700 # meters per pixel in x dimension
 ```
 
 
-####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+
+#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 An example of the result plotted back down onto the road with the lane markings:
 
 ![alt text][image15]
 
----
 
-###Pipeline (video)
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+#### 7. Final Output
 
-Here's a [link to my video result](./project_video.mp4)
+![alt text][image16]
 
 ---
 
-###Discussion
+### Pipeline (video)
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+
+Here's a [link to my video result](./output_project_video.mp4)
+
+---
+
+### Discussion
+
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 1. Choosing the correct color space.
 2. Choosing the correct thresholds for color and binary
